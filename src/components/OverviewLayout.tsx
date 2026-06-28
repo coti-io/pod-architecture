@@ -169,9 +169,9 @@ export default function OverviewLayout() {
         <span className="hero-tag">Privacy on Demand</span>
         <h1>How PoD works</h1>
         <p>
-          Follow an encrypted <strong>MpcAdder</strong> request from Sepolia through the relayer
-          stack to COTI MPC execution and back. Click any block to zoom in, or play the full
-          journey step by step.
+          Follow an encrypted <strong>MpcAdder</strong> request from Sepolia through the relayer stack to COTI MPC execution and back.
+          <br />
+          Click any block to zoom in, or play the full journey step by step.
         </p>
       </header>
 
