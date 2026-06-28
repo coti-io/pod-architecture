@@ -175,21 +175,6 @@ export default function OverviewLayout() {
         </p>
       </header>
 
-      <JourneyControls
-        playing={playing}
-        step={journeyStep}
-        totalSteps={totalJourneySteps}
-        phase={phase}
-        onPlay={() => {
-          if (journeyStep >= totalJourneySteps) setJourneyStep(0);
-          setPlaying(true);
-        }}
-        onPause={() => setPlaying(false)}
-        onStep={handleStep}
-        onReset={handleReset}
-        onPhaseChange={setPhase}
-      />
-
       <div
         className={[
           "blocks-grid",
@@ -223,6 +208,21 @@ export default function OverviewLayout() {
       {isMobile && !focusedBlock && (
         <CrossBlockLinks activeStep={journeyStep} phase={phase} layout="vertical" />
       )}
+
+      <JourneyControls
+        playing={playing}
+        step={journeyStep}
+        totalSteps={totalJourneySteps}
+        phase={phase}
+        onPlay={() => {
+          if (journeyStep >= totalJourneySteps) setJourneyStep(0);
+          setPlaying(true);
+        }}
+        onPause={() => setPlaying(false)}
+        onStep={handleStep}
+        onReset={handleReset}
+        onPhaseChange={setPhase}
+      />
 
       <JourneyFeeStack journeyStep={journeyStep} playing={playing} />
 
