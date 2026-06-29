@@ -2,7 +2,44 @@
 
 Interactive guide to how **Privacy on Demand (PoD)** works: source chain contracts, relayer services, and COTI MPC execution.
 
-Standalone static site — link from [pod-explorer](https://github.com/coti-io/pod-explorer) and [docs.coti.io](https://docs.coti.io).
+Standalone static site — link from [pod-explorer](https://github.com/cotitech-io/pod-explorer) and [docs.coti.io](https://docs.coti.io).
+
+## PoD ecosystem repositories
+
+This site maps to the repos below. They are grouped by role in the cross-chain flow (source chain → relayer → COTI → return).
+
+### On-chain contracts
+
+| Repository | Role |
+|------------|------|
+| [coti-contracts](https://github.com/coti-io/coti-contracts) | Core COTI garbled-circuit and MPC library, plus PoD dApp contracts under `contracts/pod/`: `MpcAdder`, `PodLib`, `MpcCore`, pERC20, Privacy Portal, and integration examples. |
+| [coti-pod-inbox-contracts](https://github.com/coti-io/coti-pod-inbox-contracts) | Cross-chain **Inbox** implementation: message routing, miner (`batchProcessRequests`), fee manager, and `MpcAbiCodec`. Inbox-facing interfaces are synced into `coti-contracts`. |
+| [pod-mpc-lib](https://github.com/coti-io/pod-mpc-lib) | **Legacy monolith** — original combined PoD contracts and Hardhat tooling. Active development is split into `coti-pod-inbox-contracts` and `coti-contracts`; use [pod-ecosystem-integration](https://github.com/coti-io/pod-ecosystem-integration) for full-stack work. |
+
+### Relayer stack
+
+When a `MessageSent` event fires on the source chain, three services carry the request to COTI and back:
+
+| Repository | Abbrev | Role |
+|------------|--------|------|
+| [bs-nbe](https://github.com/cotitech-io/bs-nbe) | **NBE** | Monitors BlockScout (or a compatible explorer API) for Inbox transactions on the source network and posts notifications downstream. |
+| [contract-manager-service](https://github.com/cotitech-io/contract-manager-service) | **CMS** | Contract Manager — receives upstream requests, applies contract-specific module logic, builds unsigned transaction payloads, and forwards them for signing. |
+| [hot-wallet-v2](https://github.com/cotitech-io/hot-wallet-v2) | **Hot wallet** | Signs, broadcasts, and monitors EVM transactions; handles gas slippage, stuck-tx replacement, and status callbacks. |
+
+### Frontend and documentation
+
+| Repository | Role |
+|------------|------|
+| [pod-architecture](https://github.com/cotitech-io/pod-architecture) (this repo) | Interactive architecture guide with zoomable flow diagrams, journey playback, and fee breakdown. |
+| [pod-explorer](https://github.com/cotitech-io/pod-explorer) | PoD block explorer for browsing cross-chain requests and contract activity. |
+| [documentation](https://github.com/coti-io/documentation) | GitBook source for [docs.coti.io](https://docs.coti.io), including the [Privacy on Demand](https://docs.coti.io/coti-documentation/privacy-on-demand) guide. |
+
+### Developer tooling
+
+| Repository | Role |
+|------------|------|
+| [coti-sdk-pod](https://github.com/coti-io/coti-sdk-pod) | TypeScript SDK (`@coti/pod-sdk`) for PoD dApps: encrypt/decrypt helpers, async Inbox patterns, account onboarding, and contract integration docs. |
+| [pod-ecosystem-integration](https://github.com/coti-io/pod-ecosystem-integration) | Multi-repo dev workspace, deploy scripts, and E2E/system tests across inbox, dApp contracts, and COTI executor flows. |
 
 ## What it shows
 
