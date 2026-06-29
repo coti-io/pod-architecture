@@ -1,0 +1,38 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../coti-contracts"
+		},
+		{
+			"path": "../pod-mpc-lib"
+		},
+		{
+			"path": "../bs-nbe"
+		},
+		{
+			"path": "../contract-manager-service"
+		},
+		{
+			"path": "../hot-wallet-v2"
+		},
+		{
+			"path": "../pod-explorer"
+		},
+		{
+			"path": "../documentation"
+		},
+		{
+			"path": "../coti-sdk-pod"
+		},
+		{
+			"path": "../coti-pod-inbox-contracts"
+		},
+		{
+			"path": "../pod-ecosystem-integration"
+		}
+	],
+	"settings": {}
+}
