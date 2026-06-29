@@ -175,11 +175,11 @@ export default function OverviewLayout() {
         </p>
         <nav className="hero-links" aria-label="Related documentation">
           <a
-            href="https://docs.coti.io/coti-documentation/coti-privacy-portal"
+            href="https://docs.coti.io/coti-documentation/privacy-on-demand"
             target="_blank"
             rel="noreferrer"
           >
-            COTI Privacy Portal
+            Privacy on Demand documentation
           </a>
         </nav>
       </header>
