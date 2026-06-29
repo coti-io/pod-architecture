@@ -173,6 +173,15 @@ export default function OverviewLayout() {
           <br />
           Click any block to zoom in, or play the full journey step by step.
         </p>
+        <nav className="hero-links" aria-label="Related documentation">
+          <a
+            href="https://docs.coti.io/coti-documentation/coti-privacy-portal"
+            target="_blank"
+            rel="noreferrer"
+          >
+            COTI Privacy Portal
+          </a>
+        </nav>
       </header>
 
       <div

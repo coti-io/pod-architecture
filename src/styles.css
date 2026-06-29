@@ -115,6 +115,23 @@ a {
   color: var(--ink);
 }
 
+.hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin-top: 16px;
+}
+
+.hero-links a {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.hero-links a:hover {
+  text-decoration: underline;
+}
+
 .hero p {
   color: var(--muted);
   font-size: 1.05rem;
