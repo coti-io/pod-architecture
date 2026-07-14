@@ -171,7 +171,7 @@ export const flowNodes: FlowNode[] = [
     description:
       "Inbox delivers the return leg by calling the registered callback on the original sender contract.",
     signature: "receiveC(bytes data) external onlyInbox",
-    position: { x: 200, y: 290 },
+    position: { x: 380, y: 390 },
     kind: "contract",
   },
   {
@@ -181,7 +181,18 @@ export const flowNodes: FlowNode[] = [
     phase: "return",
     description: "MpcAdder decodes ctUint64 from the callback payload and stores it for the user to read.",
     signature: "_result = abi.decode(data, (ctUint64))",
-    position: { x: 200, y: 190 },
+    position: { x: 380, y: 250 },
+    kind: "event",
+  },
+  {
+    id: "result-ready",
+    label: "Result ready",
+    block: "source",
+    phase: "return",
+    description:
+      "Encrypted sum is available for the user to read and decrypt client-side with their account key.",
+    signature: "getResult() / decrypt ctUint64",
+    position: { x: 380, y: 110 },
     kind: "event",
   },
 
@@ -381,10 +392,10 @@ export const flowEdges: FlowEdge[] = [
   // Cross: relayer → source return
   { id: "e21", source: "hot-wallet", target: "inbox-src", label: "batchProcessRequests", phase: "return", step: 21, crossBlock: true },
 
-  // Source return
+  // Source return — right lane, so All-phase view does not collide with outbound helpers
   { id: "e22", source: "inbox-src", target: "receive-c", label: "callback delivery", phase: "return", step: 22 },
-  { id: "e23", source: "receive-c", target: "mpc-adder", label: "receiveC(bytes)", phase: "return", step: 23 },
-  { id: "e24", source: "mpc-adder", target: "result-store", label: "store ctUint64", phase: "return", step: 24 },
+  { id: "e23", source: "receive-c", target: "result-store", label: "store ctUint64", phase: "return", step: 23 },
+  { id: "e24", source: "result-store", target: "result-ready", label: "readable by user", phase: "return", step: 24 },
 ];
 
 export const totalJourneySteps = 24;

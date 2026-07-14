@@ -9,6 +9,10 @@ import type { FlowEdge, FlowNode } from "./pod-flow";
  */
 export const payrollFlowNodes: FlowNode[] = [
   // --- Fuji host ---
+  // Source layout (three lanes — avoids outbound/return overlap in All phase):
+  //   left x≈20  = outbound spine
+  //   mid  x≈240 = outbound helpers / MessageSent
+  //   right x≈460 = return spine (bottom → top)
   {
     id: "user",
     label: "Employee / claimant",
@@ -28,11 +32,11 @@ export const payrollFlowNodes: FlowNode[] = [
     repo: "pod-dapp-ports",
     githubPath: "sablier-payroll-pod/contracts-src/avax/PayrollCampaignFacade.sol",
     block: "source",
-    phase: "both",
+    phase: "outbound",
     description:
       "Sablier-shaped campaign API on Fuji. Checks campaign window, Merkle leaf, and fee, then asks the vault to request a private COTI payout verification.",
     signature: "claim(...) → _preProcessClaim → requestPayout",
-    position: { x: 20, y: 90 },
+    position: { x: 20, y: 100 },
     kind: "contract",
   },
   {
@@ -46,7 +50,7 @@ export const payrollFlowNodes: FlowNode[] = [
     description:
       "Holds the encrypted claim package (itAmount + proofHandle) prepared for the vault’s async payout request.",
     signature: "preparePayload / claim package",
-    position: { x: 200, y: 90 },
+    position: { x: 240, y: 100 },
     kind: "contract",
   },
   {
@@ -56,11 +60,11 @@ export const payrollFlowNodes: FlowNode[] = [
     repo: "pod-dapp-ports",
     githubPath: "sablier-payroll-pod/contracts-src/avax/PayrollVault.sol",
     block: "source",
-    phase: "both",
+    phase: "outbound",
     description:
       "Fuji inbox client. Builds an MpcMethodCall targeting PrivatePayrollCoti.verifyAndCredit and sends a two-way Inbox message with fee split.",
     signature: "requestPayout → _sendTwoWayWithFee",
-    position: { x: 20, y: 190 },
+    position: { x: 20, y: 200 },
     kind: "contract",
   },
   {
@@ -74,7 +78,7 @@ export const payrollFlowNodes: FlowNode[] = [
     description:
       "Encodes runId, claimant, encrypted amount, and proofHandle into an MpcMethodCall for the COTI payroll verifier.",
     signature: "create(verifyAndCredit.selector, …).build()",
-    position: { x: 200, y: 190 },
+    position: { x: 240, y: 200 },
     kind: "contract",
   },
   {
@@ -88,7 +92,7 @@ export const payrollFlowNodes: FlowNode[] = [
     description:
       "Splits callback fee from total payment and calls Inbox.sendTwoWayMessage with the encoded verifyAndCredit payload.",
     signature: "_sendTwoWayWithFee → sendTwoWayMessage{value}",
-    position: { x: 20, y: 290 },
+    position: { x: 20, y: 300 },
     kind: "contract",
   },
   {
@@ -102,7 +106,7 @@ export const payrollFlowNodes: FlowNode[] = [
     description:
       "Cross-chain message bus on Fuji. Same deterministic address on every PoD chain. Stores outbound requests and delivers payroll callbacks.",
     signature: "sendTwoWayMessage(...) / onPayoutAuthorized onlyInbox",
-    position: { x: 20, y: 390 },
+    position: { x: 20, y: 400 },
     kind: "contract",
   },
   {
@@ -113,7 +117,7 @@ export const payrollFlowNodes: FlowNode[] = [
     description:
       "Event emitted when the Fuji inbox creates an outbound payroll verification request. The relayer watches for these transactions.",
     signature: "event MessageSent(bytes32 requestId, ...)",
-    position: { x: 200, y: 390 },
+    position: { x: 240, y: 400 },
     kind: "event",
   },
   {
@@ -125,9 +129,23 @@ export const payrollFlowNodes: FlowNode[] = [
     block: "source",
     phase: "return",
     description:
-      "Inbox delivers the return leg. The vault verifies the COTI sender, then pays out encrypted pToken and marks the index claimed.",
+      "Inbox delivers the return leg. The vault verifies the COTI sender, then triggers encrypted pToken payout and claim booking on the facade.",
     signature: "onPayoutAuthorized(bytes) external onlyInbox",
-    position: { x: 200, y: 290 },
+    position: { x: 460, y: 400 },
+    kind: "contract",
+  },
+  {
+    id: "facade-payout",
+    label: "Facade payout",
+    subtitle: "payoutTo + markClaimed",
+    repo: "pod-dapp-ports",
+    githubPath: "sablier-payroll-pod/contracts-src/avax/PayrollCampaignFacade.sol",
+    block: "source",
+    phase: "return",
+    description:
+      "Vault calls the campaign facade to transfer encrypted pToken to the claimant and mark the Merkle index claimed.",
+    signature: "payoutTo{value}(to, itAmount) + markClaimed(index)",
+    position: { x: 460, y: 280 },
     kind: "contract",
   },
   {
@@ -136,9 +154,9 @@ export const payrollFlowNodes: FlowNode[] = [
     block: "source",
     phase: "return",
     description:
-      "Facade payoutTo + markClaimed finish the Sablier-shaped claim. Encrypted amount never appears in plaintext on Fuji.",
-    signature: "payoutTo(...) + markClaimed(index) → PayoutCompleted",
-    position: { x: 200, y: 190 },
+      "Claim settled on Fuji. Encrypted amount never appears in plaintext on the host chain.",
+    signature: "PayoutCompleted(requestId, runId, index, to)",
+    position: { x: 460, y: 160 },
     kind: "event",
   },
 
@@ -328,10 +346,10 @@ export const payrollFlowEdges: FlowEdge[] = [
   // Cross: relayer → Fuji return
   { id: "e21", source: "hot-wallet", target: "inbox-src", label: "batchProcessRequests", phase: "return", step: 21, crossBlock: true },
 
-  // Fuji return
+  // Fuji return — stays on the right lane (no hop back across the outbound spine)
   { id: "e22", source: "inbox-src", target: "on-payout-authorized", label: "callback delivery", phase: "return", step: 22 },
-  { id: "e23", source: "on-payout-authorized", target: "facade", label: "payoutTo + markClaimed", phase: "return", step: 23 },
-  { id: "e24", source: "facade", target: "payout-complete", label: "PayoutCompleted", phase: "return", step: 24 },
+  { id: "e23", source: "on-payout-authorized", target: "facade-payout", label: "payoutTo + markClaimed", phase: "return", step: 23 },
+  { id: "e24", source: "facade-payout", target: "payout-complete", label: "PayoutCompleted", phase: "return", step: 24 },
 ];
 
 export const payrollTotalJourneySteps = 24;

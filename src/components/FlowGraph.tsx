@@ -97,6 +97,8 @@ function toReactFlowEdges(
         id: e.id,
         source: e.source,
         target: e.target,
+        type: "smoothstep",
+        pathOptions: { borderRadius: 14, offset: 0 },
         label: e.label,
         animated: active,
         className: [

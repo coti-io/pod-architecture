@@ -582,6 +582,14 @@ a {
   stroke-width: 2;
 }
 
+.pod-edge .react-flow__edge-textbg {
+  fill: rgba(255, 255, 255, 0.96);
+}
+
+.pod-edge .react-flow__edge-text {
+  font-size: 11px;
+}
+
 .pod-edge--active .react-flow__edge-path {
   stroke: var(--accent);
   stroke-width: 2.5;

@@ -164,7 +164,7 @@ export function getJourneyFeeState(
     network.id === "fuji"
       ? {
           22: `${host} — Inbox delivers onPayoutAuthorized`,
-          23: `${host} — payoutTo + markClaimed; callback gas consumed`,
+          23: `${host} — facade payoutTo + markClaimed`,
           24: "Complete — private payroll claim settled",
         }
       : {
