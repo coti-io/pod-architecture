@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  blocks,
   type BlockId,
   type FlowEdge,
   type FlowNode,
   type Phase,
+  getBlocks,
+  getFlowDataset,
   getNodeById,
   getStepEdge,
   getDisplayEdgeId,
   getStepTargetNode,
-  totalJourneySteps,
+  localizeFlowNode,
 } from "../data/pod-flow";
+import { useNetwork } from "../network/NetworkContext";
 import CrossBlockLinks, {
   CrossBlockConnector,
   CrossLinkStep,
 } from "./CrossBlockLinks";
+import DummyFlowStrip from "./DummyFlowStrip";
 import FeeStackPanel from "./FeeStackPanel";
 import FlowGraph from "./FlowGraph";
 import JourneyControls from "./JourneyControls";
@@ -38,6 +41,10 @@ function useMediaQuery(query: string) {
 }
 
 export default function OverviewLayout() {
+  const network = useNetwork();
+  const blocks = useMemo(() => getBlocks(network), [network]);
+  const flow = useMemo(() => getFlowDataset(network), [network]);
+  const totalSteps = flow.totalSteps;
   const isMobile = useMediaQuery("(max-width: 1023px)");
 
   const [focusedBlock, setFocusedBlock] = useState<BlockId | null>(null);
@@ -49,14 +56,14 @@ export default function OverviewLayout() {
 
   const activeNodeId = useMemo(() => {
     if (journeyStep <= 0) return null;
-    const edge = getStepEdge(journeyStep);
+    const edge = getStepEdge(journeyStep, network);
     return edge?.target ?? null;
-  }, [journeyStep]);
+  }, [journeyStep, network]);
 
   const activeEdgeId = useMemo(() => {
     if (journeyStep <= 0) return null;
-    return getDisplayEdgeId(journeyStep, phase);
-  }, [journeyStep, phase]);
+    return getDisplayEdgeId(journeyStep, phase, network);
+  }, [journeyStep, phase, network]);
 
   const highlightedNodeIds = useMemo(() => {
     if (!selectedNode) return new Set<string>();
@@ -65,16 +72,23 @@ export default function OverviewLayout() {
 
   const displayPhase: Phase | "all" = phase;
 
-  const handleNodeClick = useCallback((node: FlowNode) => {
-    setSelectedNode(node);
-    setSelectedEdge(null);
-    setFocusedBlock(node.block);
-  }, []);
+  const handleNodeClick = useCallback(
+    (node: FlowNode) => {
+      setSelectedNode(localizeFlowNode(node, network));
+      setSelectedEdge(null);
+      setFocusedBlock(node.block);
+    },
+    [network],
+  );
 
-  const handleEdgeClick = useCallback((edge: FlowEdge) => {
-    setSelectedEdge(edge);
-    setSelectedNode(getNodeById(edge.target) ?? null);
-  }, []);
+  const handleEdgeClick = useCallback(
+    (edge: FlowEdge) => {
+      setSelectedEdge(edge);
+      const target = getNodeById(edge.target, network);
+      setSelectedNode(target ? localizeFlowNode(target, network) : null);
+    },
+    [network],
+  );
 
   const handleClosePanel = useCallback(() => {
     setSelectedNode(null);
@@ -91,12 +105,12 @@ export default function OverviewLayout() {
 
   const handleStep = useCallback(() => {
     setPlaying(false);
-    setJourneyStep((s) => Math.min(s + 1, totalJourneySteps));
-  }, []);
+    setJourneyStep((s) => Math.min(s + 1, totalSteps));
+  }, [totalSteps]);
 
   useEffect(() => {
     if (!playing) return;
-    if (journeyStep >= totalJourneySteps) {
+    if (journeyStep >= totalSteps) {
       setPlaying(false);
       return;
     }
@@ -104,18 +118,18 @@ export default function OverviewLayout() {
       setJourneyStep((s) => s + 1);
     }, 1400);
     return () => window.clearTimeout(timer);
-  }, [playing, journeyStep]);
+  }, [playing, journeyStep, totalSteps]);
 
   useEffect(() => {
     if (journeyStep <= 0) return;
-    const target = getStepTargetNode(journeyStep);
-    const edge = getStepEdge(journeyStep);
+    const target = getStepTargetNode(journeyStep, network);
+    const edge = getStepEdge(journeyStep, network);
     if (target) {
-      setSelectedNode(target);
+      setSelectedNode(localizeFlowNode(target, network));
       setFocusedBlock(target.block);
     }
     if (edge) setSelectedEdge(edge);
-  }, [journeyStep]);
+  }, [journeyStep, network]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -163,26 +177,62 @@ export default function OverviewLayout() {
     );
   };
 
+  const heroLeadParts = network.heroLead.split(network.heroEmphasis);
+
   return (
     <div className="overview">
       <header className="hero">
-        <span className="hero-tag">Privacy on Demand</span>
-        <h1>How PoD works</h1>
+        <span className="hero-tag">{network.heroTag}</span>
+        <h1>{network.heroTitle}</h1>
         <p>
-          Follow an encrypted <strong>MpcAdder</strong> request from Sepolia through the relayer stack to COTI MPC execution and back.
+          {heroLeadParts.length === 2 ? (
+            <>
+              {heroLeadParts[0]}
+              <strong>{network.heroEmphasis}</strong>
+              {heroLeadParts[1]}
+            </>
+          ) : (
+            network.heroLead
+          )}
           <br />
           Click any block to zoom in, or play the full journey step by step.
         </p>
         <nav className="hero-links" aria-label="Related documentation">
-          <a
-            href="https://docs.coti.io/coti-documentation/privacy-on-demand"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Privacy on Demand documentation
+          <a href={network.docsHref} target="_blank" rel="noreferrer">
+            {network.docsLabel}
           </a>
+          {network.exampleRepoHref && (
+            <a
+              href={network.exampleRepoHref}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {network.exampleRepoLabel ?? "Example repository"}
+            </a>
+          )}
+          {network.alternate && (
+            <a href={network.alternate.href}>{network.alternate.label}</a>
+          )}
         </nav>
       </header>
+
+      <DummyFlowStrip
+        activeBlock={focusedBlock}
+        onFocusBlock={(block) => {
+          setFocusedBlock(block);
+          setSelectedNode(null);
+          setSelectedEdge(null);
+        }}
+      />
+
+      <div className="detail-flow-heading">
+        <span className="eyebrow">Under the hood</span>
+        <h2>Detailed architecture</h2>
+        <p className="muted-text">
+          Same journey with contracts, services, and call paths. Click a block to
+          zoom in, or play the step-by-step walkthrough below.
+        </p>
+      </div>
 
       <div
         className={[
@@ -221,10 +271,10 @@ export default function OverviewLayout() {
       <JourneyControls
         playing={playing}
         step={journeyStep}
-        totalSteps={totalJourneySteps}
+        totalSteps={totalSteps}
         phase={phase}
         onPlay={() => {
-          if (journeyStep >= totalJourneySteps) setJourneyStep(0);
+          if (journeyStep >= totalSteps) setJourneyStep(0);
           setPlaying(true);
         }}
         onPause={() => setPlaying(false)}

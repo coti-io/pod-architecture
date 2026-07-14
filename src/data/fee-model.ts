@@ -176,12 +176,14 @@ export function computeFeeBreakdown(input: FeeInputs): FeeBreakdown {
   };
 }
 
-export function defaultFeeInputs(): FeeInputs {
+export function defaultFeeInputs(
+  localPriceUsd: number = DEFAULT_LOCAL_PRICE_USD,
+): FeeInputs {
   const gasPriceGwei = DEFAULT_GAS_PRICE_GWEI;
   const gasPriceWei = BigInt(Math.round(gasPriceGwei * 1e9));
   const mpcPayloadBytes = DEFAULT_MPC_PAYLOAD_BYTES;
 
-  const localPriceScaled = BigInt(Math.round(DEFAULT_LOCAL_PRICE_USD * 1e14));
+  const localPriceScaled = BigInt(Math.round(localPriceUsd * 1e14));
   const remotePriceScaled = BigInt(Math.round(DEFAULT_REMOTE_PRICE_USD * 1e14));
 
   const localMinGasUnits = expectedMinGasUnits(
@@ -206,16 +208,25 @@ export function defaultFeeInputs(): FeeInputs {
     msgValueEth: Math.round(msgValueEth * 1e6) / 1e6,
     callbackFeeEth: Math.round(callbackFeeEth * 1e6) / 1e6,
     txGasUsed: DEFAULT_TX_GAS_USED,
-    localPriceUsd: DEFAULT_LOCAL_PRICE_USD,
+    localPriceUsd,
     remotePriceUsd: DEFAULT_REMOTE_PRICE_USD,
     mpcPayloadBytes,
   };
 }
 
-export function formatEth(value: number, digits = 6): string {
-  if (value === 0) return "0 ETH";
+export function formatNative(
+  value: number,
+  symbol: string,
+  digits = 6,
+): string {
+  if (value === 0) return `0 ${symbol}`;
   if (value < 0.000001) return `${(value * 1e9).toFixed(2)} gwei`;
-  return `${value.toFixed(digits)} ETH`;
+  return `${value.toFixed(digits)} ${symbol}`;
+}
+
+/** @deprecated Prefer formatNative(value, symbol). */
+export function formatEth(value: number, digits = 6): string {
+  return formatNative(value, "ETH", digits);
 }
 
 export function formatGasUnits(value: bigint): string {

@@ -1,4 +1,5 @@
-import { flowEdges } from "../data/pod-flow";
+import { getFlowDataset } from "../data/pod-flow";
+import { useNetwork } from "../network/NetworkContext";
 
 type CrossLinkPhase = "outbound" | "return" | "all";
 
@@ -7,26 +8,29 @@ type CrossLinkProps = {
   phase: CrossLinkPhase;
 };
 
-const crossLinks = [
-  {
-    id: "cross-source-relayer",
-    from: "source",
-    to: "relayer",
-    outboundStep: 7,
-    returnStep: 21,
-    outboundLabel: "MessageSent → NBE",
-    returnLabel: "hot-wallet → Sepolia Inbox",
-  },
-  {
-    id: "cross-relayer-coti",
-    from: "relayer",
-    to: "coti",
-    outboundStep: 10,
-    returnStep: 18,
-    outboundLabel: "hot-wallet → batchProcessRequests",
-    returnLabel: "return MessageSent → relayer",
-  },
-] as const;
+function useCrossLinks() {
+  const network = useNetwork();
+  return [
+    {
+      id: "cross-source-relayer",
+      from: "source",
+      to: "relayer",
+      outboundStep: 7,
+      returnStep: 21,
+      outboundLabel: "MessageSent → NBE",
+      returnLabel: `hot-wallet → ${network.shortName} Inbox`,
+    },
+    {
+      id: "cross-relayer-coti",
+      from: "relayer",
+      to: "coti",
+      outboundStep: 10,
+      returnStep: 18,
+      outboundLabel: "hot-wallet → batchProcessRequests",
+      returnLabel: "return MessageSent → relayer",
+    },
+  ] as const;
+}
 
 function CrossLinkPill({
   label,
@@ -61,6 +65,7 @@ export function CrossBlockConnector({
   activeStep,
   phase,
 }: CrossLinkProps & { linkIndex: number }) {
+  const crossLinks = useCrossLinks();
   const link = crossLinks[linkIndex];
   if (!link) return null;
 
@@ -90,11 +95,16 @@ export function CrossBlockConnector({
 }
 
 export function CrossLinkStep({ activeStep }: { activeStep: number }) {
+  const network = useNetwork();
   if (activeStep <= 0) return null;
+
+  const edge =
+    getFlowDataset(network).edges.find((e) => e.step === activeStep && e.crossBlock) ??
+    getFlowDataset(network).edges.find((e) => e.step === activeStep);
 
   return (
     <div className="cross-link-step">
-      {flowEdges.find((e) => e.step === activeStep)?.label ?? ""}
+      {edge?.label ?? ""}
     </div>
   );
 }
@@ -108,6 +118,7 @@ export default function CrossBlockLinks({
   phase,
   layout,
 }: CrossBlockLinksProps) {
+  const crossLinks = useCrossLinks();
   if (layout !== "vertical") return null;
 
   const showReturn = phase === "all" || phase === "return";

@@ -1,3 +1,5 @@
+import type { NetworkProfile } from "./networks";
+import { SEPOLIA_NETWORK } from "./networks";
 import type { BlockId } from "./pod-flow";
 import { totalJourneySteps } from "./pod-flow";
 
@@ -28,7 +30,7 @@ function callbackDrainProgress(step: number): number {
   return lerp(1, 0, (step - 22) / 2);
 }
 
-function sepoliaTxGasRemaining(step: number): number {
+function sourceTxGasRemaining(step: number): number {
   if (step <= 0) return 1;
   if (step === 1) return 0.85;
   if (step <= 4) return lerp(0.85, 0.2, (step - 1) / 3);
@@ -36,8 +38,12 @@ function sepoliaTxGasRemaining(step: number): number {
   return 0;
 }
 
-export function getJourneyFeeState(step: number): JourneyFeeState {
+export function getJourneyFeeState(
+  step: number,
+  network: NetworkProfile = SEPOLIA_NETWORK,
+): JourneyFeeState {
   const clamped = Math.max(0, Math.min(step, totalJourneySteps));
+  const host = network.shortName;
 
   if (clamped === 0) {
     return {
@@ -51,26 +57,36 @@ export function getJourneyFeeState(step: number): JourneyFeeState {
     };
   }
 
-  const red = sepoliaTxGasRemaining(clamped);
+  const red = sourceTxGasRemaining(clamped);
   const remote = remoteDrainProgress(clamped);
   const callback = callbackDrainProgress(clamped);
 
   if (clamped <= 6) {
-    const labels: Record<number, string> = {
-      1: "Sepolia — user submits MpcAdder.add with msg.value",
-      2: "Sepolia — PodLib encodes the MPC call",
-      3: "Sepolia — calldata prepared for COTI",
-      4: "Sepolia — forwarding to Inbox",
-      5: "Sepolia — sendTwoWayMessage: red (tx gas) paid to network",
-      6: "Sepolia — MessageSent; blue reserve locked in Inbox",
-    };
+    const labels: Record<number, string> =
+      network.id === "fuji"
+        ? {
+            1: `${host} — employee submits payroll claim with msg.value`,
+            2: `${host} — facade prepares claim package / requestPayout`,
+            3: `${host} — encode verifyAndCredit for COTI`,
+            4: `${host} — vault forwards through PodLibBase`,
+            5: `${host} — sendTwoWayMessage: red (tx gas) paid to network`,
+            6: `${host} — MessageSent; blue reserve locked in Inbox`,
+          }
+        : {
+            1: `${host} — user submits MpcAdder.add with msg.value`,
+            2: `${host} — PodLib encodes the MPC call`,
+            3: `${host} — calldata prepared for COTI`,
+            4: `${host} — forwarding to Inbox`,
+            5: `${host} — sendTwoWayMessage: red (tx gas) paid to network`,
+            6: `${host} — MessageSent; blue reserve locked in Inbox`,
+          };
     return {
       sepoliaTxGasRemaining: red,
       cotiRemoteRemaining: remote,
       sepoliaCallbackRemaining: callback,
       activeBlock: "source",
       consumingSegment: clamped >= 5 ? "sepoliaTxGas" : null,
-      label: labels[clamped] ?? "Sepolia — preparing request",
+      label: labels[clamped] ?? `${host} — preparing request`,
       inTransit: false,
     };
   }
@@ -93,16 +109,28 @@ export function getJourneyFeeState(step: number): JourneyFeeState {
   }
 
   if (clamped <= 17) {
-    const labels: Record<number, string> = {
-      10: "COTI — batchProcessRequests ingests the request",
-      11: "COTI — MessageReceived stored",
-      12: "COTI — executing incoming request",
-      13: "COTI — validating ciphertext",
-      14: "COTI — MpcExecutor.add64 subcall",
-      15: "COTI — MpcCore checkedAdd (remote gas budget consumed)",
-      16: "COTI — respond creates return-leg request",
-      17: "COTI — remote slice fully spent; callback still reserved on Sepolia",
-    };
+    const labels: Record<number, string> =
+      network.id === "fuji"
+        ? {
+            10: "COTI — batchProcessRequests ingests the claim",
+            11: "COTI — MessageReceived stored",
+            12: "COTI — executing incoming request",
+            13: "COTI — validating ciphertext",
+            14: "COTI — PrivatePayrollCoti.verifyAndCredit",
+            15: "COTI — MpcCore eq amount match (remote gas consumed)",
+            16: "COTI — respond creates return-leg request",
+            17: `COTI — remote slice fully spent; callback still reserved on ${host}`,
+          }
+        : {
+            10: "COTI — batchProcessRequests ingests the request",
+            11: "COTI — MessageReceived stored",
+            12: "COTI — executing incoming request",
+            13: "COTI — validating ciphertext",
+            14: "COTI — MpcExecutor.add64 subcall",
+            15: "COTI — MpcCore checkedAdd (remote gas budget consumed)",
+            16: "COTI — respond creates return-leg request",
+            17: `COTI — remote slice fully spent; callback still reserved on ${host}`,
+          };
     return {
       sepoliaTxGasRemaining: red,
       cotiRemoteRemaining: remote,
@@ -118,8 +146,8 @@ export function getJourneyFeeState(step: number): JourneyFeeState {
     const labels: Record<number, string> = {
       18: "Relayer — return request detected",
       19: "Relayer — CMS mines return leg",
-      20: "Relayer — hot wallet broadcasts to Sepolia",
-      21: "Sepolia — return request received by Inbox",
+      20: `Relayer — hot wallet broadcasts to ${host}`,
+      21: `${host} — return request received by Inbox`,
     };
     return {
       sepoliaTxGasRemaining: red,
@@ -132,11 +160,18 @@ export function getJourneyFeeState(step: number): JourneyFeeState {
     };
   }
 
-  const labels: Record<number, string> = {
-    22: "Sepolia — Inbox delivers receiveC callback",
-    23: "Sepolia — callback gas consumed; result stored",
-    24: "Complete — all user-paid segments consumed",
-  };
+  const labels: Record<number, string> =
+    network.id === "fuji"
+      ? {
+          22: `${host} — Inbox delivers onPayoutAuthorized`,
+          23: `${host} — payoutTo + markClaimed; callback gas consumed`,
+          24: "Complete — private payroll claim settled",
+        }
+      : {
+          22: `${host} — Inbox delivers receiveC callback`,
+          23: `${host} — callback gas consumed; result stored`,
+          24: "Complete — all user-paid segments consumed",
+        };
 
   return {
     sepoliaTxGasRemaining: red,
@@ -144,22 +179,27 @@ export function getJourneyFeeState(step: number): JourneyFeeState {
     sepoliaCallbackRemaining: callback,
     activeBlock: "source",
     consumingSegment: clamped <= 23 ? "sepoliaCallback" : null,
-    label: labels[clamped] ?? "Sepolia — callback delivery",
+    label: labels[clamped] ?? `${host} — callback delivery`,
     inTransit: false,
   };
 }
 
-export const FEE_SEGMENT_META: Record<
-  FeeSegmentId,
-  { title: string; colorClass: string; subClass?: string }
-> = {
-  sepoliaTxGas: { title: "Sepolia tx gas", colorClass: "journey-fee-seg--red" },
-  cotiRemote: {
-    title: "COTI execution",
-    colorClass: "journey-fee-seg--blue-dark",
-  },
-  sepoliaCallback: {
-    title: "Sepolia callback",
-    colorClass: "journey-fee-seg--blue-light",
-  },
-};
+export function getFeeSegmentMeta(
+  network: NetworkProfile = SEPOLIA_NETWORK,
+): Record<FeeSegmentId, { title: string; colorClass: string; subClass?: string }> {
+  const host = network.shortName;
+  return {
+    sepoliaTxGas: { title: `${host} tx gas`, colorClass: "journey-fee-seg--red" },
+    cotiRemote: {
+      title: "COTI execution",
+      colorClass: "journey-fee-seg--blue-dark",
+    },
+    sepoliaCallback: {
+      title: `${host} callback`,
+      colorClass: "journey-fee-seg--blue-light",
+    },
+  };
+}
+
+/** @deprecated Prefer getFeeSegmentMeta(network). */
+export const FEE_SEGMENT_META = getFeeSegmentMeta(SEPOLIA_NETWORK);

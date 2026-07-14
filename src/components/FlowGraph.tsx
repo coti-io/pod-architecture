@@ -17,6 +17,7 @@ import {
   getEdgesForBlock,
   getNodesForBlock,
 } from "../data/pod-flow";
+import { useNetwork } from "../network/NetworkContext";
 import PodFlowNode from "./PodFlowNode";
 
 type FlowGraphProps = {
@@ -125,14 +126,21 @@ export default function FlowGraph({
   onEdgeClick,
   interactive,
 }: FlowGraphProps) {
+  const network = useNetwork();
   const containerRef = useRef<HTMLDivElement>(null);
   const flowRef = useRef<ReactFlowInstance | null>(null);
   const [containerWidth, setContainerWidth] = useState(LAYOUT_BASE_WIDTH);
 
   const layoutScale = layoutScaleForWidth(containerWidth);
 
-  const blockNodes = useMemo(() => getNodesForBlock(block), [block]);
-  const blockEdges = useMemo(() => getEdgesForBlock(block, phase), [block, phase]);
+  const blockNodes = useMemo(
+    () => getNodesForBlock(block, network),
+    [block, network],
+  );
+  const blockEdges = useMemo(
+    () => getEdgesForBlock(block, phase, network),
+    [block, phase, network],
+  );
 
   const highlightedEdgeIds = useMemo(() => {
     if (!selectedNodeId) return new Set<string>();

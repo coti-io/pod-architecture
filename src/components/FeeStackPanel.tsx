@@ -3,17 +3,21 @@ import {
   DEFAULT_REMOTE_MIN_GAS_UNITS,
   computeFeeBreakdown,
   defaultFeeInputs,
-  formatEth,
+  formatNative,
   formatGasUnits,
   type FeeInputs,
 } from "../data/fee-model";
+import { useNetwork } from "../network/NetworkContext";
 
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 
 export default function FeeStackPanel() {
-  const [inputs, setInputs] = useState<FeeInputs>(defaultFeeInputs);
+  const network = useNetwork();
+  const [inputs, setInputs] = useState<FeeInputs>(() =>
+    defaultFeeInputs(network.defaultLocalPriceUsd),
+  );
   const [expanded, setExpanded] = useState(false);
   const [blueExpanded, setBlueExpanded] = useState(true);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -63,7 +67,9 @@ export default function FeeStackPanel() {
           <span className="fee-stack-panel__chevron" aria-hidden />
           <div>
             <span className="eyebrow">Fee stack</span>
-            <h2 id="fee-stack-title">What the user pays on Sepolia</h2>
+            <h2 id="fee-stack-title">
+              What the user pays on {network.displayName}
+            </h2>
             {expanded && (
               <p className="fee-stack-panel__intro">
                 One vertical stack:{" "}
@@ -71,7 +77,7 @@ export default function FeeStackPanel() {
                   <span className="fee-legend fee-legend--red" aria-hidden />
                   <strong>red</strong>
                 </span>{" "}
-                is Sepolia gas to submit the tx;{" "}
+                is {network.shortName} gas to submit the tx;{" "}
                 <span className="fee-legend-inline">
                   <span className="fee-legend fee-legend--blue" aria-hidden />
                   <strong>blue</strong>
@@ -93,7 +99,9 @@ export default function FeeStackPanel() {
         </div>
         <div className="fee-stack-panel__total">
           <span className="fee-stack-panel__total-label">Total cost</span>
-          <strong>{formatEth(breakdown.totalUserCostEth, 5)}</strong>
+          <strong>
+            {formatNative(breakdown.totalUserCostEth, network.nativeSymbol, 5)}
+          </strong>
           <span className="muted-text">@ {inputs.gasPriceGwei} gwei</span>
         </div>
       </button>
@@ -113,7 +121,13 @@ export default function FeeStackPanel() {
               >
                 <span className="fee-stack-segment__label">
                   Inbox reserve
-                  <small>{formatEth(breakdown.msgValueEth, 5)}</small>
+                  <small>
+                    {formatNative(
+                      breakdown.msgValueEth,
+                      network.nativeSymbol,
+                      5,
+                    )}
+                  </small>
                 </span>
                 {blueExpanded && (
                   <div className="fee-stack-sub">
@@ -122,7 +136,13 @@ export default function FeeStackPanel() {
                       style={{ flexGrow: remotePctInBlue }}
                     >
                       <span className="fee-stack-sub__title">COTI execution</span>
-                      <small>{formatEth(breakdown.remoteFeeEth, 5)}</small>
+                      <small>
+                        {formatNative(
+                          breakdown.remoteFeeEth,
+                          network.nativeSymbol,
+                          5,
+                        )}
+                      </small>
                       <div className="fee-stack-sub__split">
                         <div
                           className="fee-stack-sub__floor fee-stack-sub__floor--remote"
@@ -130,7 +150,13 @@ export default function FeeStackPanel() {
                           title={`Inbox floor: ${formatGasUnits(breakdown.remoteMinGasUnits)} gas units`}
                         >
                           <span>Min 12M</span>
-                          <small>{formatEth(breakdown.remoteFloorEth, 5)}</small>
+                          <small>
+                            {formatNative(
+                              breakdown.remoteFloorEth,
+                              network.nativeSymbol,
+                              5,
+                            )}
+                          </small>
                         </div>
                         {breakdown.remoteHeadroomEth > 0 && (
                           <div
@@ -142,7 +168,11 @@ export default function FeeStackPanel() {
                           >
                             <span>Extra</span>
                             <small>
-                              {formatEth(breakdown.remoteHeadroomEth, 5)}
+                              {formatNative(
+                                breakdown.remoteHeadroomEth,
+                                network.nativeSymbol,
+                                5,
+                              )}
                             </small>
                           </div>
                         )}
@@ -152,8 +182,16 @@ export default function FeeStackPanel() {
                       className="fee-stack-sub__callback"
                       style={{ flexGrow: callbackPctInBlue }}
                     >
-                      <span className="fee-stack-sub__title">Sepolia callback</span>
-                      <small>{formatEth(breakdown.callbackFeeEth, 5)}</small>
+                      <span className="fee-stack-sub__title">
+                        {network.shortName} callback
+                      </span>
+                      <small>
+                        {formatNative(
+                          breakdown.callbackFeeEth,
+                          network.nativeSymbol,
+                          5,
+                        )}
+                      </small>
                       <div className="fee-stack-sub__split">
                         <div
                           className="fee-stack-sub__floor fee-stack-sub__floor--callback"
@@ -161,7 +199,13 @@ export default function FeeStackPanel() {
                           title={`Template minimum: ${formatGasUnits(breakdown.localMinGasUnits)} gas units`}
                         >
                           <span>Min</span>
-                          <small>{formatEth(breakdown.callbackFloorEth, 5)}</small>
+                          <small>
+                            {formatNative(
+                              breakdown.callbackFloorEth,
+                              network.nativeSymbol,
+                              5,
+                            )}
+                          </small>
                         </div>
                         {breakdown.callbackHeadroomEth > 0 && (
                           <div
@@ -173,7 +217,11 @@ export default function FeeStackPanel() {
                           >
                             <span>Extra</span>
                             <small>
-                              {formatEth(breakdown.callbackHeadroomEth, 5)}
+                              {formatNative(
+                                breakdown.callbackHeadroomEth,
+                                network.nativeSymbol,
+                                5,
+                              )}
                             </small>
                           </div>
                         )}
@@ -189,8 +237,14 @@ export default function FeeStackPanel() {
                 style={{ flexGrow: redPct }}
               >
                 <span className="fee-stack-segment__label">
-                  Sepolia tx gas
-                  <small>{formatEth(breakdown.sepoliaTxGasEth, 5)}</small>
+                  {network.shortName} tx gas
+                  <small>
+                    {formatNative(
+                      breakdown.sepoliaTxGasEth,
+                      network.nativeSymbol,
+                      5,
+                    )}
+                  </small>
                 </span>
               </div>
             )}
@@ -200,14 +254,15 @@ export default function FeeStackPanel() {
             <li>
               <span className="fee-legend fee-legend--red" aria-hidden />
               <span className="fee-stack-legend__label">
-                Sepolia network — pays validators for broadcasting{" "}
-                <code>MpcAdder.add</code>
+                {network.displayName} — pays validators for broadcasting{" "}
+                <code>{network.exampleCallLabel}</code>
               </span>
             </li>
             <li>
               <span className="fee-legend fee-legend--blue" aria-hidden />
               <span className="fee-stack-legend__label">
-                Inbox — held on Sepolia Inbox; not spent as gas at send time
+                Inbox — held on {network.shortName} Inbox; not spent as gas at
+                send time
               </span>
             </li>
             <li>
@@ -219,7 +274,7 @@ export default function FeeStackPanel() {
             <li>
               <span className="fee-legend fee-legend--blue-light" aria-hidden />
               <span className="fee-stack-legend__label">
-                Callback slice → Sepolia return leg
+                Callback slice → {network.shortName} return leg
               </span>
             </li>
             <li>
@@ -240,11 +295,11 @@ export default function FeeStackPanel() {
 
         <div className="fee-stack-details">
           <div className="fee-oracle-card">
-            <h3>Inbox minimum floors (Sepolia Inbox)</h3>
+            <h3>Inbox minimum floors ({network.shortName} Inbox)</h3>
             <p className="muted-text">
               The Inbox rejects underpayment via <code>TargetFeeTooLow</code> /{" "}
               <code>CallbackFeeTooLow</code>. Floors are in gas units; the UI converts
-              them to ETH using your gas price and oracle ratio.
+              them to {network.nativeSymbol} using your gas price and oracle ratio.
             </p>
             <dl className="fee-dl">
               <div>
@@ -252,7 +307,13 @@ export default function FeeStackPanel() {
                 <dd>
                   {formatGasUnits(breakdown.remoteMinGasUnits)} gas units
                   <span className="fee-dl__sub">
-                    ≈ {formatEth(breakdown.remoteFloorEth, 5)} of remote slice
+                    ≈{" "}
+                    {formatNative(
+                      breakdown.remoteFloorEth,
+                      network.nativeSymbol,
+                      5,
+                    )}{" "}
+                    of remote slice
                   </span>
                 </dd>
               </div>
@@ -261,7 +322,13 @@ export default function FeeStackPanel() {
                 <dd>
                   {formatGasUnits(breakdown.localMinGasUnits)} gas units
                   <span className="fee-dl__sub">
-                    ≈ {formatEth(breakdown.callbackFloorEth, 5)} min callback slice
+                    ≈{" "}
+                    {formatNative(
+                      breakdown.callbackFloorEth,
+                      network.nativeSymbol,
+                      5,
+                    )}{" "}
+                    min callback slice
                   </span>
                 </dd>
               </div>
@@ -285,7 +352,9 @@ export default function FeeStackPanel() {
             </p>
             <dl className="fee-dl">
               <div>
-                <dt>Sepolia ETH price</dt>
+                <dt>
+                  {network.shortName} {network.nativeSymbol} price
+                </dt>
                 <dd>${inputs.localPriceUsd.toLocaleString()}</dd>
               </div>
               <div>
@@ -307,15 +376,24 @@ export default function FeeStackPanel() {
               <p className="fee-warn-msg">
                 Remote below floor — inbox would revert{" "}
                 <code>TargetFeeTooLow</code>. Need at least{" "}
-                {formatEth(breakdown.minMsgValueEthForRemoteMin, 5)} in{" "}
-                <code>msg.value</code> (incl. callback min).
+                {formatNative(
+                  breakdown.minMsgValueEthForRemoteMin,
+                  network.nativeSymbol,
+                  5,
+                )}{" "}
+                in <code>msg.value</code> (incl. callback min).
               </p>
             )}
             {breakdown.meetsRemoteMinimum && !breakdown.meetsCallbackMinimum && (
               <p className="fee-warn-msg">
                 Callback below local template minimum — would revert{" "}
                 <code>CallbackFeeTooLow</code>. Need callback slice ≥{" "}
-                {formatEth(breakdown.minCallbackFeeEth, 5)}.
+                {formatNative(
+                  breakdown.minCallbackFeeEth,
+                  network.nativeSymbol,
+                  5,
+                )}
+                .
               </p>
             )}
             {breakdown.meetsRemoteMinimum && breakdown.meetsCallbackMinimum && (
@@ -344,7 +422,7 @@ export default function FeeStackPanel() {
 
             <label className="fee-control">
               <span>
-                <code>msg.value</code> (ETH)
+                <code>msg.value</code> ({network.nativeSymbol})
               </span>
               <input
                 type="range"
@@ -356,11 +434,13 @@ export default function FeeStackPanel() {
                   patch({ msgValueEth: Number(e.target.value) })
                 }
               />
-              <output>{formatEth(inputs.msgValueEth, 5)}</output>
+              <output>
+                {formatNative(inputs.msgValueEth, network.nativeSymbol, 5)}
+              </output>
             </label>
 
             <label className="fee-control">
-              <span>Callback fee slice (ETH)</span>
+              <span>Callback fee slice ({network.nativeSymbol})</span>
               <input
                 type="range"
                 min={0.00001}
@@ -376,7 +456,13 @@ export default function FeeStackPanel() {
                   })
                 }
               />
-              <output>{formatEth(breakdown.callbackFeeEth, 5)}</output>
+              <output>
+                {formatNative(
+                  breakdown.callbackFeeEth,
+                  network.nativeSymbol,
+                  5,
+                )}
+              </output>
             </label>
 
             <button
@@ -404,7 +490,9 @@ export default function FeeStackPanel() {
                   <output>{inputs.txGasUsed.toLocaleString()}</output>
                 </label>
                 <label className="fee-control">
-                  <span>ETH/USD (oracle local)</span>
+                  <span>
+                    {network.nativeSymbol}/USD (oracle local)
+                  </span>
                   <input
                     type="range"
                     min={1000}

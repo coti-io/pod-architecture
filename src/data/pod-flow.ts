@@ -1,3 +1,11 @@
+import {
+  payrollFlowEdges,
+  payrollFlowNodes,
+  payrollTotalJourneySteps,
+} from "./flow-payroll";
+import type { NetworkProfile } from "./networks";
+import { SEPOLIA_NETWORK } from "./networks";
+
 export type BlockId = "source" | "relayer" | "coti";
 export type Phase = "outbound" | "return" | "both";
 
@@ -32,26 +40,31 @@ export type BlockMeta = {
   accent: string;
 };
 
-export const blocks: BlockMeta[] = [
-  {
-    id: "source",
-    title: "Source network",
-    subtitle: "Sepolia (example)",
-    accent: "#0b7cff",
-  },
-  {
-    id: "relayer",
-    title: "Relayer",
-    subtitle: "Off-chain services",
-    accent: "#7c3aed",
-  },
-  {
-    id: "coti",
-    title: "COTI network",
-    subtitle: "MPC execution chain",
-    accent: "#059669",
-  },
-];
+export function getBlocks(network: NetworkProfile = SEPOLIA_NETWORK): BlockMeta[] {
+  return [
+    {
+      id: "source",
+      title: "Source network",
+      subtitle: network.sourceBlockSubtitle,
+      accent: network.sourceAccent,
+    },
+    {
+      id: "relayer",
+      title: "Relayer",
+      subtitle: "Off-chain services",
+      accent: "#7c3aed",
+    },
+    {
+      id: "coti",
+      title: "COTI network",
+      subtitle: "MPC execution chain",
+      accent: "#059669",
+    },
+  ];
+}
+
+/** @deprecated Prefer getBlocks(network) — kept for call sites that default to Sepolia. */
+export const blocks: BlockMeta[] = getBlocks(SEPOLIA_NETWORK);
 
 export const flowNodes: FlowNode[] = [
   // --- Source chain ---
@@ -312,12 +325,23 @@ export const flowNodes: FlowNode[] = [
     block: "coti",
     phase: "return",
     description:
-      "Creates the outbound return-leg request with the callback selector and fee budget for delivery back to Sepolia.",
+      "Creates the outbound return-leg request with the callback selector and fee budget for delivery back to the source chain.",
     signature: "_sendOneWayMessage → MessageSent (return leg)",
     position: { x: 200, y: 390 },
     kind: "event",
   },
 ];
+
+export function localizeFlowNode(
+  node: FlowNode,
+  network: NetworkProfile,
+): FlowNode {
+  if (node.id !== "send-one-way") return node;
+  return {
+    ...node,
+    description: `Creates the outbound return-leg request with the callback selector and fee budget for delivery back to ${network.shortName}.`,
+  };
+}
 
 export const flowEdges: FlowEdge[] = [
   // Source outbound
@@ -365,17 +389,53 @@ export const flowEdges: FlowEdge[] = [
 
 export const totalJourneySteps = 24;
 
-export function getNodeById(id: string): FlowNode | undefined {
-  return flowNodes.find((n) => n.id === id);
+export type FlowDataset = {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+  totalSteps: number;
+};
+
+export function getFlowDataset(
+  network: NetworkProfile = SEPOLIA_NETWORK,
+): FlowDataset {
+  if (network.id === "fuji") {
+    return {
+      nodes: payrollFlowNodes,
+      edges: payrollFlowEdges,
+      totalSteps: payrollTotalJourneySteps,
+    };
+  }
+  return {
+    nodes: flowNodes,
+    edges: flowEdges,
+    totalSteps: totalJourneySteps,
+  };
 }
 
-export function getNodesForBlock(block: BlockId): FlowNode[] {
-  return flowNodes.filter((n) => n.block === block);
+export function getNodeById(
+  id: string,
+  network: NetworkProfile = SEPOLIA_NETWORK,
+): FlowNode | undefined {
+  return getFlowDataset(network).nodes.find((n) => n.id === id);
 }
 
-export function getEdgesForBlock(block: BlockId, phase: Phase | "all"): FlowEdge[] {
-  const nodeIds = new Set(getNodesForBlock(block).map((n) => n.id));
-  const filtered = flowEdges.filter((e) => {
+export function getNodesForBlock(
+  block: BlockId,
+  network: NetworkProfile = SEPOLIA_NETWORK,
+): FlowNode[] {
+  return getFlowDataset(network).nodes.filter((n) => n.block === block);
+}
+
+export function getEdgesForBlock(
+  block: BlockId,
+  phase: Phase | "all",
+  network: NetworkProfile = SEPOLIA_NETWORK,
+): FlowEdge[] {
+  const dataset = getFlowDataset(network);
+  const nodeIds = new Set(
+    dataset.nodes.filter((n) => n.block === block).map((n) => n.id),
+  );
+  const filtered = dataset.edges.filter((e) => {
     if (!nodeIds.has(e.source) || !nodeIds.has(e.target)) return false;
     if (phase === "all") return true;
     return e.phase === phase || e.phase === "both";
@@ -392,13 +452,22 @@ export function getEdgesForBlock(block: BlockId, phase: Phase | "all"): FlowEdge
   });
 }
 
-export function getStepEdge(step: number): FlowEdge | undefined {
-  return flowEdges.find((e) => e.step === step);
+export function getStepEdge(
+  step: number,
+  network: NetworkProfile = SEPOLIA_NETWORK,
+): FlowEdge | undefined {
+  // Prefer the cross-block edge when multiple edges share a step (e.g. claim package + requestPayout).
+  const matches = getFlowDataset(network).edges.filter((e) => e.step === step);
+  return matches.find((e) => e.crossBlock) ?? matches[0];
 }
 
 /** Maps return-leg relayer steps to outbound edges for graph highlighting in "all" phase. */
-export function getDisplayEdgeId(step: number, phase: Phase | "all"): string | null {
-  const edge = getStepEdge(step);
+export function getDisplayEdgeId(
+  step: number,
+  phase: Phase | "all",
+  network: NetworkProfile = SEPOLIA_NETWORK,
+): string | null {
+  const edge = getStepEdge(step, network);
   if (!edge) return null;
   if (phase !== "all") return edge.id;
   const aliases: Record<number, string> = {
@@ -408,10 +477,13 @@ export function getDisplayEdgeId(step: number, phase: Phase | "all"): string | n
   return aliases[step] ?? edge.id;
 }
 
-export function getStepTargetNode(step: number): FlowNode | undefined {
-  const edge = getStepEdge(step);
+export function getStepTargetNode(
+  step: number,
+  network: NetworkProfile = SEPOLIA_NETWORK,
+): FlowNode | undefined {
+  const edge = getStepEdge(step, network);
   if (!edge) return undefined;
-  return getNodeById(edge.target);
+  return getNodeById(edge.target, network);
 }
 
 export function getGithubUrl(node: FlowNode): string | null {
@@ -421,6 +493,7 @@ export function getGithubUrl(node: FlowNode): string | null {
     "pod-mpc-lib": "https://github.com/coti-io/pod-mpc-lib/blob/main",
     "bs-nbe": "https://github.com/coti-io/bs-nbe/blob/main",
     "hot-wallet-v2": "https://github.com/coti-io/hot-wallet-v2/blob/main",
+    "pod-dapp-ports": "https://github.com/cotitech-io/pod-dapp-ports/blob/main",
   };
   const base = bases[node.repo];
   return base ? `${base}/${node.githubPath}` : null;

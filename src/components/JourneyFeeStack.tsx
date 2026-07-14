@@ -1,11 +1,12 @@
 import { useMemo } from "react";
-import { blocks, type BlockId } from "../data/pod-flow";
+import { getBlocks, type BlockId } from "../data/pod-flow";
 import {
   computeFeeBreakdown,
   defaultFeeInputs,
-  formatEth,
+  formatNative,
 } from "../data/fee-model";
-import { FEE_SEGMENT_META, getJourneyFeeState } from "../data/fee-journey";
+import { getFeeSegmentMeta, getJourneyFeeState } from "../data/fee-journey";
+import { useNetwork } from "../network/NetworkContext";
 
 type JourneyFeeStackProps = {
   journeyStep: number;
@@ -18,13 +19,16 @@ export default function JourneyFeeStack({
   journeyStep,
   playing,
 }: JourneyFeeStackProps) {
+  const network = useNetwork();
+  const blocks = useMemo(() => getBlocks(network), [network]);
+  const segmentMeta = useMemo(() => getFeeSegmentMeta(network), [network]);
   const breakdown = useMemo(
-    () => computeFeeBreakdown(defaultFeeInputs()),
-    [],
+    () => computeFeeBreakdown(defaultFeeInputs(network.defaultLocalPriceUsd)),
+    [network.defaultLocalPriceUsd],
   );
   const state = useMemo(
-    () => getJourneyFeeState(journeyStep),
-    [journeyStep],
+    () => getJourneyFeeState(journeyStep, network),
+    [journeyStep, network],
   );
 
   const sepoliaTxH =
@@ -139,7 +143,7 @@ export default function JourneyFeeStack({
                       .filter(Boolean)
                       .join(" ")}
                     style={{ height: remotePx }}
-                    title={`COTI remote: ${formatEth(remoteH, 5)} remaining`}
+                    title={`COTI remote: ${formatNative(remoteH, network.nativeSymbol, 5)} remaining`}
                   >
                     {remoteExtraPx > 2 && (
                       <div
@@ -151,7 +155,7 @@ export default function JourneyFeeStack({
                       <div
                         className="journey-fee-seg__floor journey-fee-seg__floor--remote"
                         style={{ flexGrow: remoteFloorShare || 0.001 }}
-                        title={`Min floor: ${formatEth(breakdown.remoteFloorEth * state.cotiRemoteRemaining, 5)}`}
+                        title={`Min floor: ${formatNative(breakdown.remoteFloorEth * state.cotiRemoteRemaining, network.nativeSymbol, 5)}`}
                       />
                     )}
                     <span>COTI</span>
@@ -168,7 +172,7 @@ export default function JourneyFeeStack({
                       .filter(Boolean)
                       .join(" ")}
                     style={{ height: callbackPx }}
-                    title={`Callback: ${formatEth(callbackH, 5)} remaining`}
+                    title={`Callback: ${formatNative(callbackH, network.nativeSymbol, 5)} remaining`}
                   >
                     {callbackExtraPx > 2 && (
                       <div
@@ -180,7 +184,7 @@ export default function JourneyFeeStack({
                       <div
                         className="journey-fee-seg__floor journey-fee-seg__floor--callback"
                         style={{ flexGrow: callbackFloorShare || 0.001 }}
-                        title={`Min floor: ${formatEth(breakdown.callbackFloorEth * state.sepoliaCallbackRemaining, 5)}`}
+                        title={`Min floor: ${formatNative(breakdown.callbackFloorEth * state.sepoliaCallbackRemaining, network.nativeSymbol, 5)}`}
                       />
                     )}
                     <span>Callback</span>
@@ -199,7 +203,7 @@ export default function JourneyFeeStack({
                   .filter(Boolean)
                   .join(" ")}
                 style={{ height: sepoliaTxPx }}
-                title={`Tx gas: ${formatEth(sepoliaTxH, 5)} remaining`}
+                title={`Tx gas: ${formatNative(sepoliaTxH, network.nativeSymbol, 5)} remaining`}
               >
                 <span>Tx gas</span>
               </div>
@@ -209,9 +213,17 @@ export default function JourneyFeeStack({
             )}
           </div>
           <div className="journey-fee-stack-total">
-            {formatEth(totalH, 5)} left
+            {formatNative(totalH, network.nativeSymbol, 5)} left
             {journeyStep === 0 && (
-              <small> of {formatEth(breakdown.totalUserCostEth, 5)}</small>
+              <small>
+                {" "}
+                of{" "}
+                {formatNative(
+                  breakdown.totalUserCostEth,
+                  network.nativeSymbol,
+                  5,
+                )}
+              </small>
             )}
           </div>
         </div>
@@ -256,7 +268,7 @@ export default function JourneyFeeStack({
                 <span className="journey-fee-block__sub">{meta.subtitle}</span>
                 {isActive && state.consumingSegment && (
                   <span className="journey-fee-block__chip">
-                    {FEE_SEGMENT_META[state.consumingSegment].title}
+                    {segmentMeta[state.consumingSegment].title}
                   </span>
                 )}
                 {isActive && state.inTransit && (
