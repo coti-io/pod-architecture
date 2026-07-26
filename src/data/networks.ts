@@ -42,6 +42,9 @@ export type NetworkProfile = {
   /** Example repo link shown in the hero (optional). */
   exampleRepoHref?: string;
   exampleRepoLabel?: string;
+  /** Live demo dApp link shown in the hero (optional). */
+  demoHref?: string;
+  demoLabel?: string;
   /** Optional peer page for network switcher (omit to hide). */
   alternate?: {
     href: string;
@@ -129,6 +132,8 @@ export const FUJI_NETWORK: NetworkProfile = {
   exampleRepoHref:
     "https://github.com/cotitech-io/pod-dapp-ports/tree/main/sablier-payroll-pod",
   exampleRepoLabel: "Sablier payroll PoD example",
+  demoHref: "https://payroll.demo.coti.io/",
+  demoLabel: "Payroll demo",
   docsHref:
     "https://docs.coti.io/coti-documentation/privacy-on-demand/networks/fuji",
   docsLabel: "Avalanche Fuji network docs",

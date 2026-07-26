@@ -204,6 +204,11 @@ export default function OverviewLayout() {
           <a href={network.explorerHref} target="_blank" rel="noreferrer">
             {network.explorerLabel}
           </a>
+          {network.demoHref && (
+            <a href={network.demoHref} target="_blank" rel="noreferrer">
+              {network.demoLabel ?? "Live demo"}
+            </a>
+          )}
           {network.exampleRepoHref && (
             <a
               href={network.exampleRepoHref}
