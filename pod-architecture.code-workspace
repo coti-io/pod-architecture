@@ -35,6 +35,9 @@
 		},
 		{
 			"path": "../pod-audit"
+		},
+		{
+			"path": "../cursor-machine-repo/pod-explorer"
 		}
 	],
 	"settings": {}

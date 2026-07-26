@@ -24,6 +24,9 @@ export type NetworkProfile = {
   heroLead: string;
   docsHref: string;
   docsLabel: string;
+  /** Live PoD message explorer (testnet). */
+  explorerHref: string;
+  explorerLabel: string;
   sourceBlockSubtitle: string;
   sourceAccent: string;
   themeClass: string;
@@ -61,6 +64,8 @@ export const SEPOLIA_NETWORK: NetworkProfile = {
   exampleCallLabel: "MpcAdder.add",
   docsHref: "https://docs.coti.io/coti-documentation/privacy-on-demand",
   docsLabel: "Privacy on Demand documentation",
+  explorerHref: "https://testnet.explorer.pod.coti.io",
+  explorerLabel: "Testnet PoD Explorer",
   sourceBlockSubtitle: "Sepolia (example)",
   sourceAccent: "#0b7cff",
   themeClass: "",
@@ -127,6 +132,8 @@ export const FUJI_NETWORK: NetworkProfile = {
   docsHref:
     "https://docs.coti.io/coti-documentation/privacy-on-demand/networks/fuji",
   docsLabel: "Avalanche Fuji network docs",
+  explorerHref: "https://testnet.explorer.pod.coti.io",
+  explorerLabel: "Testnet PoD Explorer",
   sourceBlockSubtitle: "Fuji C-Chain (host)",
   sourceAccent: "#E84142",
   themeClass: "theme-avalanche",
