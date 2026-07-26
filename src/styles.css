@@ -193,6 +193,14 @@ a {
   display: block;
 }
 
+.site-nav__network-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: block;
+  object-fit: cover;
+}
+
 .site-nav__label {
   white-space: nowrap;
 }

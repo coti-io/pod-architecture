@@ -50,9 +50,14 @@ function GithubIcon() {
 
 function AvalancheIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12.9 4.4c-.35-.6-1.45-.6-1.8 0L3.7 18.2c-.36.62.1 1.4.9 1.4h3.2c.45 0 .86-.24 1.08-.63l3.12-5.4 3.12 5.4c.22.39.63.63 1.08.63h3.2c.8 0 1.26-.78.9-1.4L12.9 4.4Zm-.9 5.5L14.7 15H9.3L12 9.9Z" />
-    </svg>
+    <img
+      className="site-nav__network-icon"
+      src="/logos/avalanche.png"
+      alt=""
+      width={18}
+      height={18}
+      decoding="async"
+    />
   );
 }
 
