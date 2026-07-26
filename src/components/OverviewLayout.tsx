@@ -23,6 +23,7 @@ import FlowGraph from "./FlowGraph";
 import JourneyControls from "./JourneyControls";
 import JourneyFeeStack from "./JourneyFeeStack";
 import NodeDetailPanel from "./NodeDetailPanel";
+import SiteNav from "./SiteNav";
 import ZoomableBlock from "./ZoomableBlock";
 
 function useMediaQuery(query: string) {
@@ -181,6 +182,8 @@ export default function OverviewLayout() {
 
   return (
     <div className="overview">
+      <SiteNav />
+
       <header className="hero">
         <span className="hero-tag">{network.heroTag}</span>
         <h1>{network.heroTitle}</h1>
@@ -197,31 +200,6 @@ export default function OverviewLayout() {
           <br />
           Click any block to zoom in, or play the full journey step by step.
         </p>
-        <nav className="hero-links" aria-label="Related documentation">
-          <a href={network.docsHref} target="_blank" rel="noreferrer">
-            {network.docsLabel}
-          </a>
-          <a href={network.explorerHref} target="_blank" rel="noreferrer">
-            {network.explorerLabel}
-          </a>
-          {network.demoHref && (
-            <a href={network.demoHref} target="_blank" rel="noreferrer">
-              {network.demoLabel ?? "Live demo"}
-            </a>
-          )}
-          {network.exampleRepoHref && (
-            <a
-              href={network.exampleRepoHref}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {network.exampleRepoLabel ?? "Example repository"}
-            </a>
-          )}
-          {network.alternate && (
-            <a href={network.alternate.href}>{network.alternate.label}</a>
-          )}
-        </nav>
       </header>
 
       <DummyFlowStrip
