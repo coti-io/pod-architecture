@@ -108,7 +108,7 @@ export const SEPOLIA_NETWORK: NetworkProfile = {
     },
   ],
   alternate: {
-    href: "./avalanche/",
+    href: "https://pod.coti.io/avalanche/index.html",
     label: "Avalanche Fuji C-Chain",
   },
 };
