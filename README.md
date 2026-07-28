@@ -38,7 +38,7 @@ When a `MessageSent` event fires on the source chain, three services carry the r
 
 | Repository | Role |
 |------------|------|
-| [coti-sdk-pod](https://github.com/coti-io/coti-sdk-pod) | TypeScript SDK (`@coti/pod-sdk`) for PoD dApps: encrypt/decrypt helpers, async Inbox patterns, account onboarding, and contract integration docs. |
+| [coti-sdk-pod](https://github.com/coti-io/coti-sdk-pod) | TypeScript SDK (`@coti-io/pod-sdk`) for PoD dApps: encrypt/decrypt helpers, async Inbox patterns, account onboarding, and contract integration docs. |
 | [pod-ecosystem-integration](https://github.com/coti-io/pod-ecosystem-integration) | Multi-repo dev workspace, deploy scripts, and E2E/system tests across inbox, dApp contracts, and COTI executor flows. |
 
 ## What it shows
