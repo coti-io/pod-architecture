@@ -16,9 +16,6 @@
 			"path": "../hot-wallet-v2"
 		},
 		{
-			"path": "../pod-explorer"
-		},
-		{
 			"path": "../documentation"
 		},
 		{
@@ -37,7 +34,14 @@
 			"path": "../pod-audit"
 		},
 		{
-			"path": "../cursor-machine-repo/pod-explorer"
+			"path": "../coti-wallet-plugin"
+		},
+		{
+			"path": "../pod-integration-tests"
+		},
+		{
+			"name": "PoD explorer",
+			"path": "../cursor-machine-repo"
 		}
 	],
 	"settings": {}

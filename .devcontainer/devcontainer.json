@@ -1,0 +1,56 @@
+{
+	"name": "PoD Multi-Repo",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app",
+	"workspaceFolder": "/workspaces/pod-architecture",
+	"features": {
+		"ghcr.io/devcontainers/features/python:1": {
+			"version": "3.12",
+			"installTools": true
+		},
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+		"ghcr.io/devcontainers/features/github-cli:1": {}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-azuretools.vscode-containers",
+				"ms-azuretools.vscode-docker",
+				"esbenp.prettier-vscode",
+				"dbaeumer.vscode-eslint",
+				"NomicFoundation.hardhat-solidity",
+				"ms-python.python",
+				"ms-python.black-formatter",
+				"cweijan.vscode-mysql-client2"
+			]
+		}
+	},
+	"forwardPorts": [5173, 5174, 8000, 8545, 8546],
+	"portsAttributes": {
+		"5173": {
+			"label": "Vite (pod-explorer)",
+			"onAutoForward": "notify"
+		},
+		"5174": {
+			"label": "Vite (pod-architecture)",
+			"onAutoForward": "notify"
+		},
+		"8000": {
+			"label": "FastAPI",
+			"onAutoForward": "notify"
+		},
+		"8545": {
+			"label": "Hardhat node A",
+			"onAutoForward": "silent"
+		},
+		"8546": {
+			"label": "Hardhat node B",
+			"onAutoForward": "silent"
+		}
+	},
+	"hostRequirements": {
+		"memory": "8gb"
+	},
+	"postCreateCommand": "bash -lc 'python3 -m pip install --upgrade pip && /opt/venv/bin/pip install --upgrade pip pre-commit && echo && echo \"PoD Multi-Repo Dev Container ready.\" && echo \"Sibling repos are under /workspaces (open pod-architecture.code-workspace for the full multi-root set).\" && echo \"MySQL: host mysql port 3306 on the compose network (root/rootpassword; see .devcontainer/mysql-init). Not published to the host.\" && echo \"pre-commit: /opt/venv/bin/pre-commit (on PATH via /opt/venv).\"'",
+	"remoteUser": "node"
+}
